@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fischerprüfung - Quiz</title>
+    <link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Fischerprüfung Quiz</h1>
+
+        <div id="quiz-setup">
+            <p>Bitte wählen Sie eine Region aus, um das Quiz zu starten:</p>
+            <label for="region-select">Region:</label>
+            <select id="region-select">
+                <option value="all">Alle Regionen</option>
+                </select>
+
+            <div class="mode-selection">
+                <h3>Modus auswählen:</h3>
+                <label>
+                    <input type="radio" name="quizMode" value="learning" checked> Lernmodus
+                </label>
+                <label>
+                    <input type="radio" name="quizMode" value="exam"> Prüfungsmodus
+                </label>
+            </div>
+            <button id="start-quiz">Quiz starten</button>
+        </div>
+
+        <div id="quiz-content" style="display: none;"> 
+            <div id="quiz-area">
+                <p>Quiz wird geladen...</p>
+            </div>
+            <button id="submit-quiz">Quiz abgeben</button>
+        </div>
+
+        <div id="results-area" style="display: none;">
+        </div>
+    </div>
+
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>

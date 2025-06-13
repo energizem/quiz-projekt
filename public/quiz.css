@@ -1,0 +1,425 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #0056b3;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Stilovi za odabir regije i moda */
+#quiz-setup {
+    background-color: #f0f8ff;
+    border: 1px solid #cceeff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#quiz-setup p {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+#quiz-setup label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #004085;
+}
+
+#region-select {
+    padding: 8px 12px;
+    border: 1px solid #aaddff;
+    border-radius: 4px;
+    font-size: 1em;
+    margin-bottom: 20px;
+    width: 80%;
+    max-width: 300px;
+}
+
+/* Stilovi za odabir moda */
+.mode-selection {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #aaddff;
+    border-radius: 5px;
+    background-color: #e9f7ff;
+}
+
+.mode-selection h3 {
+    margin-top: 0;
+    color: #004085;
+    font-size: 1.1em;
+}
+
+.mode-selection label {
+    margin-right: 20px;
+    font-weight: normal; /* Override bold from #quiz-setup label */
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    color: #333;
+}
+
+.mode-selection input[type="radio"] {
+    margin-right: 8px;
+    transform: scale(1.2); /* Make radio buttons a bit larger */
+}
+
+
+.question-card {
+    background-color: #e9f7ff;
+    border: 1px solid #cceeff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.question-text {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #004085;
+}
+
+.question-image {
+    max-width: 100%;
+    height: auto;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* VAŽNO AŽURIRANJE: Ovo pravilo za .answers label mora biti DEFINIRANO NAKON onog .answers label:hover */
+/* ili mora imati veću specifičnost. Postavit ćemo ga s većom specifičnošću dodavanjem .question-card */
+/* Ovo osigurava da je display: flex aktivan. */
+.question-card .answers label {
+    display: flex; /* KLJUČNO: Aktiviramo flexbox za labele odgovora */
+    align-items: flex-start; /* Poravnaj po vrhu (zbog inputa) */
+    flex-wrap: wrap; /* Omogući prelamanje unutar labele */
+    width: 100%; /* Labela zauzima punu širinu roditelja */
+    box-sizing: border-box; /* Padding i border uključeni u širinu */
+
+    background-color: #f0f8ff;
+    border: 1px solid #aaddff;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.answers label:hover {
+    background-color: #d0eeff;
+}
+
+/* Stilovi za inpute unutar odgovora */
+.answers input[type="checkbox"],
+.answers input[type="radio"] {
+    flex-shrink: 0; /* Spriječi smanjivanje inputa */
+    margin-right: 10px;
+    margin-top: 2px; /* Malo spustiti input da se poravna s tekstom */
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 20px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#results-area {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #e6ffe6;
+    border: 1px solid #b3ffb3;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.2em;
+    color: #006600;
+}
+
+/* OLD/UNUSED styles (can be removed or adjusted if still relevant) */
+/* .correct, .incorrect, .selected are mostly replaced by new highlight classes */
+.correct { /* This might still be used for .correct-question, keep for now */
+    background-color: #d4edda;
+    border-color: #28a745;
+}
+
+.incorrect { /* This might still be used for .incorrect-question, keep for now */
+    background-color: #f8d7da;
+    border-color: #dc3545;
+}
+
+/* Stilovi za gumb za sljedeće pitanje u Lernmodus */
+.next-question-button {
+    display: block; /* Važno: postavlja se preko JS-a, ali ovdje je osnovni stil */
+    width: 100%;
+    padding: 12px 20px;
+    background-color: #28a745; /* Zelena boja za "Nächste Frage" */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 20px;
+}
+
+.next-question-button:hover {
+    background-color: #218838; /* Tamnija zelena na hover */
+}
+
+/* Onemogući klikanje na labele nakon odabira u Lernmodus */
+/* Ovo pravilo onemogućuje interakciju s labelama nakon što je pitanje odgovoreno */
+.answers.answered-question label {
+    pointer-events: none; /* Onemogući sve događaje miša na labeli */
+    cursor: default; /* Promijeni kursor */
+}
+/* No, inputi unutar labele trebaju biti onemogućeni JS-om da se spriječe promjene */
+
+
+/* Styling za odabrane odgovore i povratnu informaciju u Lernmodus */
+/* Stil za TOČNE odgovore (uvijek zeleno, čak i ako nije odabran, ali je točan) */
+.answers label.correct-highlight {
+    background-color: #d4edda; /* Svijetlo zelena za točan odgovor */
+    border-color: #28a745;
+}
+
+/* Stil za ODABRANI odgovor (naglasak na izboru korisnika) */
+.answers label.user-choice-highlight {
+    font-weight: bold;
+    border: 2px solid #007bff; /* Plavi obrub za odabrani */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Stil za odabrani odgovor ako je POGREŠAN */
+.answers label.wrong-choice-highlight {
+    background-color: #f8d7da; /* Svijetlo crvena */
+    border-color: #dc3545;
+    color: #721c24; /* Tamniji crveni tekst */
+}
+
+/* Kombinirani stilovi za Lernmodus: */
+/* Kad korisnik odabere TOČAN odgovor (Jače zeleno) */
+.answers label.user-choice-highlight.correct-highlight {
+    background-color: #28a745 !important; /* Jaka zelena */
+    color: white !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.8) !important;
+}
+
+/* Kad korisnik odabere NETOČAN odgovor (Jače crveno) */
+.answers label.user-choice-highlight.wrong-choice-highlight {
+    background-color: #dc3545 !important; /* Jaka crvena */
+    color: white !important;
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.7) !important;
+}
+
+/* Osiguraj da se u Lernmodus ispravan odgovor uvijek označi zelenom, čak i ako nije odabran. */
+/* Ovo je važno kada korisnik odabere NETOČAN odgovor, da se točan prikaže */
+.answers.answered-question label.correct-highlight:not(.user-choice-highlight) {
+    background-color: #d4edda !important; /* Svijetlo zelena pozadina */
+    border-color: #28a745 !important; /* Tamnija zelena granica */
+    color: #155724 !important; /* Tamniji zeleni tekst */
+    box-shadow: none !important; /* Ukloni sjenu ako nije odabran */
+}
+
+
+/* Stilovi za cjelokupni status pitanja u rezultatima */
+.question-card.correct-question {
+    background-color: #e6ffe6; /* Svijetlo zelena pozadina za točno odgovorena pitanja */
+    border-color: #4CAF50; /* Tamnija zelena */
+}
+
+.question-card.incorrect-question {
+    background-color: #ffe6e6; /* Svijetlo crvena pozadina za netočno odgovorena pitanja */
+    border-color: #f44336; /* Tamnija crvena */
+}
+
+
+/* Osnovni stil za sve labele odgovora u rezultatima */
+#results-area .answers label {
+    display: flex !important;
+    cursor: default !important;
+    position: relative !important;
+    border: 1px solid #ccc !important;
+    padding: 10px 15px !important;
+    margin-bottom: 5px !important;
+    border-radius: 5px !important;
+    background-color: #f8f9fa !important;
+    color: #343a40 !important;
+    font-weight: normal !important;
+    transition: all 0.2s ease-in-out !important;
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    pointer-events: none !important; /* Onemogući klikanje u rezultatima */
+}
+
+/* Stil za TOČNE odgovore (uvijek zelena pozadina) u rezultatima */
+#results-area .answers label.correct-highlight {
+    background-color: #d4edda !important; /* Svijetlo zelena pozadina */
+    border-color: #28a745 !important; /* Tamnija zelena granica */
+    color: #155724 !important; /* Tamniji zeleni tekst */
+}
+
+/* Stil za SVE odabrane odgovore (podebljan tekst, plavi obrub, sjena) u rezultatima */
+#results-area .answers label.user-choice-highlight {
+    font-weight: bold !important; /* Podebljan tekst */
+    border: 2px solid #007bff !important; /* Plavi obrub */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5) !important; /* Plava sjena */
+}
+
+/* Stil za POGREŠNO odabrane odgovore (CRVENA pozadina i obrub) u rezultatima */
+#results-area .answers label.wrong-choice-highlight {
+    background-color: #f8d7da !important; /* Svijetlo crvena pozadina */
+    border-color: #dc3545 !important; /* Tamnija crvena granica */
+    color: #721c24 !important; /* Tamniji crveni tekst */
+    box-shadow: 0 0 5px rgba(220, 53, 69, 0.7) !important; /* Crvena sjena */
+}
+
+/* Poseban stil kada je korisnik odabrao TOČAN odgovor (Jače zeleno s naglaskom) u rezultatima */
+#results-area .answers label.correct-highlight.user-choice-highlight {
+    background-color: #28a745 !important; /* Jaka zelena pozadina */
+    color: white !important; /* Bijeli tekst */
+    border: 3px solid #28a745 !important; /* Deblji zeleni obrub */
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.8) !important; /* Jača zelena sjena */
+}
+
+/* Ukloni inpute (radio/checkbox) u prikazu rezultata */
+#results-area input[type="checkbox"],
+#results-area input[type="radio"] {
+    display: none !important;
+}
+
+/* Stilovi za prebacivanje prijevoda */
+.toggle-translation-button,
+.toggle-translation-button-result {
+    font-size: 0.9em;
+    color: #007bff;
+    cursor: pointer;
+    margin-left: 8px;
+    font-weight: normal;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.toggle-translation-button:hover,
+.toggle-translation-button-result:hover {
+    text-decoration: underline;
+}
+
+/* AŽURIRANO: Stilovi za prijevodni tekst (primjenjuju se i na pitanje i na odgovor) */
+.translation-text {
+    font-size: 0.9em;
+    color: #555;
+    margin-top: 5px;
+    padding-left: 10px;
+    border-left: 2px solid #ddd;
+    width: 100%; /* Osiguraj da prijevod zauzima punu širinu unutar svog roditelja */
+    box-sizing: border-box;
+    word-break: break-word; /* KLJUČNO: Prelomi dugačke riječi ako je potrebno */
+    /* Dodana svojstva za flexbox konteks, ako je roditelj flex container */
+    flex-shrink: 1; /* Dozvoli smanjivanje */
+    flex-basis: auto; /* Zauzmi automatsku širinu, ali dozvoli smanjivanje */
+    min-width: 0; /* KLJUČNO: Dopusti smanjivanje ispod inherentne širine */
+}
+
+.hidden-translation {
+    display: none;
+}
+
+/* Prilagodbe za layout teksta pitanja i gumba */
+.question-text-and-toggle-container {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.question-text-and-toggle-container .question-text {
+    flex-basis: 0;
+    flex-grow: 1;
+    min-width: 0;
+    word-break: break-word;
+    margin-bottom: 0;
+}
+
+/* Kontejner za njemački tekst odgovora i gumb za prijevod */
+/* Ovo se koristi da njemački tekst i gumb za prijevod budu u istom redu */
+.answers label > span:nth-of-type(1) { /* Prvi span unutar labele je njemački tekst */
+    display: inline-block; /* Omogućuje inline-block ponašanje za text-content */
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0; /* Važno za text wrapping */
+    word-break: break-word; /* Osiguraj prelamanje dugih riječi */
+    white-space: normal; /* Osiguraj da se tekst ne drži u jednom redu */
+}
+
+.answers label > .toggle-translation-button { /* Gumb za prijevod odmah nakon njemačkog teksta */
+    flex-shrink: 0; /* Ne dopusti smanjivanje gumba */
+}
+
+
+/* Media Queries za bolji prikaz na manjim ekranima */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+        margin: 10px auto;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .question-card {
+        padding: 15px;
+    }
+
+    .question-text {
+        font-size: 1em;
+    }
+
+    .question-card .answers label {
+        padding: 8px 10px;
+        font-size: 0.9em;
+    }
+
+    button {
+        padding: 10px 15px;
+        font-size: 1em;
+    }
+
+    .mode-selection label {
+        margin-right: 10px;
+        font-size: 0.9em;
+    }
+}

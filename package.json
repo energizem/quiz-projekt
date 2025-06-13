@@ -1,0 +1,25 @@
+{
+  "name": "ribarski_unos_pitanja",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "start:dev": "nodemon server.js",
+    "dev": "concurrently \"npm run start:dev\" \"npm run browser-sync\"",
+    "browser-sync": "browser-sync start --proxy \"http://localhost:3000\" --files \"public/**/*.html, public/**/*.css, public/**/*.js\" --no-ui"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "browser-sync": "^2.x.x",
+    "concurrently": "^8.x.x"
+  }
+}
