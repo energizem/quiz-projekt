@@ -7,13 +7,29 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ******************************************************
+// OVDJE SU POTREBNE IZMJENE ZA POVEZIVANJE NA RENDER BAZU
+// ******************************************************
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT || 5432,
+    // Render obično daje cijeli connection string u jednoj varijabli
+    connectionString: process.env.DATABASE_URL,
+    // Dodajte SSL konfiguraciju za produkciju na Renderu
+    ssl: {
+        rejectUnauthorized: false // Postavite na 'true' u produkciji ako koristite provjereni certifikat
+                                  // Render automatski osigurava SSL, pa je 'false' obično ok za njih
+    }
+    // Uklonite pojedinačne varijable kao što su user, host, database, password, port
+    // jer su već uključeni u connectionString
+    // user: process.env.DB_USER,
+    // host: process.env.DB_HOST,
+    // database: process.env.DB_NAME,
+    // password: process.env.DB_PASSWORD,
+    // port: process.env.DB_PORT || 5432,
 });
+// ******************************************************
+// KRAJ IZMJENA ZA POVEZIVANJE NA RENDER BAZU
+// ******************************************************
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -57,6 +73,9 @@ app.get('/api/pitanja', async (req, res) => {
     if (grupa) {
         conditions.push(`p.grupa ILIKE $${conditions.length + 1}`);
         queryParams.push(`%${grupa}%`);
+        // Note: You have 'ILIKE' for grupa, which implies it's a string comparison,
+        // but your query below assumes `grupa` is integer for `quiz-pitanja`.
+        // Ensure consistency in your database schema and usage.
     }
 
     if (conditions.length > 0) {
