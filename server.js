@@ -7,34 +7,35 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+// ******************************************************
+// KRAJ IZMJENA ZA POVEZIVANJE NA lokalnu bazu
+// ******************************************************
+/* const pool = new Pool({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432,
+}); */
+
 // ******************************************************
 // OVDJE SU POTREBNE IZMJENE ZA POVEZIVANJE NA RENDER BAZU
 // ******************************************************
+
 const pool = new Pool({
-    // Render obično daje cijeli connection string u jednoj varijabli
     connectionString: process.env.DATABASE_URL,
-    // Dodajte SSL konfiguraciju za produkciju na Renderu
     ssl: {
-        rejectUnauthorized: false // Postavite na 'true' u produkciji ako koristite provjereni certifikat
-                                  // Render automatski osigurava SSL, pa je 'false' obično ok za njih
+       rejectUnauthorized: false 
     }
-    // Uklonite pojedinačne varijable kao što su user, host, database, password, port
-    // jer su već uključeni u connectionString
-    // user: process.env.DB_USER,
-    // host: process.env.DB_HOST,
-    // database: process.env.DB_NAME,
-    // password: process.env.DB_PASSWORD,
-    // port: process.env.DB_PORT || 5432,
 });
-// ******************************************************
-// KRAJ IZMJENA ZA POVEZIVANJE NA RENDER BAZU
-// ******************************************************
+
 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/admin', express.static('admin'));
+app.use('/badmin', express.static('badmin'));
 
 // Posljednje unesena regija i grupa za automatsko popunjavanje
 let lastEnteredRegion = '';
