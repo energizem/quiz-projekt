@@ -310,7 +310,7 @@ app.get('/api/kviz-pitanja', async (req, res) => {
         let questionsArray = Array.from(questionsMap.values());
 
         // Sada kada imamo filtrirana pitanja (ako je regija odabrana), primjenjujemo nasumičan odabir i limit
-        const numberOfQuestions = 60; // Fiksni broj pitanja za kviz
+        const numberOfQuestions = 360; // Fiksni broj pitanja za kviz
 
         if (questionsArray.length > numberOfQuestions) {
             questionsArray = questionsArray.sort(() => 0.5 - Math.random()).slice(0, numberOfQuestions);
@@ -372,7 +372,7 @@ app.post('/api/unos-pitanja', async (req, res) => {
                 RETURNING id;
             `;
             const questionResult = await client.query(questionInsertQuery, [
-                regija || 'Nema regije', // Default ako regija nije definirana
+                regija || 'Regija 01', // Default ako regija nije definirana
                 grupa || 'Općenito',   // Default ako grupa nije definirana
                 tekst_hr,
                 tekst_de,
