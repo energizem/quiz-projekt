@@ -88,11 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById('simulacija-ispita').addEventListener('click', () => {
     const simulacijaRegije = [
-        "regija1",
-        "regija2",
-        "regija3",
-        "regija4",
-        "regija5"
+        "BW Allgemeine Fischkunde",
+        "BW Gerätekunde, Fangtechnik",
+        "BW Spezielle Fischkunde",
+        "BW Gewässerökologie und Fischhege",
+        "BW Rechtskunde"
     ];
     const brojPitanjaPoRegiji = 12;
     const mode = document.querySelector('input[name="quizMode"]:checked').value;
