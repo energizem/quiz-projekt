@@ -68,15 +68,17 @@ app.get('/api/pitanja', async (req, res) => {
     const conditions = [];
 
     if (regija) {
-        conditions.push(`p.regija ILIKE $${conditions.length + 1}`);
-        queryParams.push(`%${regija}%`);
+        let regijeArray = regija;
+        if (!Array.isArray(regijeArray)) regijeArray = [regijeArray];
+        if (!(regijeArray.length === 1 && regijeArray[0] === 'all')) {
+            const placeholders = regijeArray.map((_, i) => `$${queryParams.length + i + 1}`).join(', ');
+            conditions.push(`p.regija IN (${placeholders})`);
+            queryParams.push(...regijeArray);
+        }
     }
     if (grupa) {
         conditions.push(`p.grupa ILIKE $${conditions.length + 1}`);
         queryParams.push(`%${grupa}%`);
-        // Note: You have 'ILIKE' for grupa, which implies it's a string comparison,
-        // but your query below assumes `grupa` is integer for `quiz-pitanja`.
-        // Ensure consistency in your database schema and usage.
     }
 
     if (conditions.length > 0) {
@@ -246,16 +248,15 @@ app.delete('/api/pitanja/:id', async (req, res) => {
     }
 });
 
-
 // Ruta za dohvaćanje posljednje unesene regije i grupe
 app.get('/api/last-input', (req, res) => {
     res.json({ lastRegion: lastEnteredRegion, lastGroup: lastEnteredGroup });
 });
 
-// Ruta za dohvaćanje pitanja za kviz (user-facing)
+// --- OVDJE JE IZMJENA: podrška za više regija ---
 app.get('/api/kviz-pitanja', async (req, res) => {
     try {
-        const { regija } = req.query; // Dohvaćanje parametra 'regija' iz URL-a (npr. /api/kviz-pitanja?regija=Bavaria)
+        let { regija, broj } = req.query; // Dodaj broj
 
         let queryText = `
             SELECT
@@ -276,13 +277,15 @@ app.get('/api/kviz-pitanja', async (req, res) => {
         `;
         const queryParams = [];
 
-        // Dodavanje filtra po regiji ako je parametar 'regija' prisutan
-        if (regija && regija !== 'all') { // 'all' će biti opcija za sva pitanja
-            queryText += ` WHERE p.regija = $1`;
-            queryParams.push(regija);
+        // Podrška za više regija
+        if (regija && regija !== 'all') {
+            if (!Array.isArray(regija)) regija = [regija];
+            const placeholders = regija.map((_, i) => `$${i + 1}`).join(', ');
+            queryText += ` WHERE p.regija IN (${placeholders})`;
+            queryParams.push(...regija);
         }
 
-        queryText += ` ORDER BY p.id, o.id;`; // Važno za grupiranje odgovora po pitanju
+        queryText += ` ORDER BY p.id, o.id;`;
 
         const result = await pool.query(queryText, queryParams);
 
@@ -309,20 +312,14 @@ app.get('/api/kviz-pitanja', async (req, res) => {
 
         let questionsArray = Array.from(questionsMap.values());
 
-        // Sada kada imamo filtrirana pitanja (ako je regija odabrana), primjenjujemo nasumičan odabir i limit
-        const numberOfQuestions = 360; // Fiksni broj pitanja za kviz
-
+        // Koristi broj iz query parametra ili default na 360
+        const numberOfQuestions = parseInt(broj, 10) || 360;
         if (questionsArray.length > numberOfQuestions) {
             questionsArray = questionsArray.sort(() => 0.5 - Math.random()).slice(0, numberOfQuestions);
         } else if (questionsArray.length < numberOfQuestions && regija && regija !== 'all') {
-            // Opcionalno: Ako nema dovoljno pitanja za odabranu regiju, možete
-            // ili poslati manje pitanja, ili popuniti do 60 s pitanjima iz drugih regija
-            // ili prikazati poruku korisniku da nema dovoljno pitanja u toj regiji.
-            // Za sada, poslat ćemo koliko god ih ima.
-            console.warn(`Nema dovoljno pitanja (${questionsArray.length}) za regiju "${regija}".`);
+            console.warn(`Nema dovoljno pitanja (${questionsArray.length}) za odabrane regije.`);
         }
 
-        // Ponovno ih sortiramo po ID-u radi dosljednog redoslijeda unutar odabranog seta
         questionsArray.sort((a, b) => a.id - b.id);
 
         res.json(questionsArray);

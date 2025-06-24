@@ -13,12 +13,12 @@ import { shuffleArray } from './utils.js';
 
 /**
  * Inicijalizira kviz, dohvaća pitanja i prikazuje UI ovisno o modu.
- * @param {string} selectedRegion Odabrana regija.
+ * @param {string|Array} selectedRegion Odabrana regija ili niz regija.
  * @param {string} mode Odabrani mod ('learning' ili 'exam').
  */
-export async function initializeQuiz(selectedRegion, mode) {
+export async function initializeQuiz(selectedRegion, mode, brojPitanja) {
     try {
-        const data = await fetchQuizQuestions(selectedRegion);
+        const data = await fetchQuizQuestions(selectedRegion, brojPitanja);
 
         if (data.length > 0) {
             resetQuizState(); // PRVO RESETIRAJ STANJE

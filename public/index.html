@@ -12,10 +12,18 @@
 
         <div id="quiz-setup">
             <p>Bitte wählen Sie eine Region aus, um das Quiz zu starten:</p>
-            <label for="region-select">Region:</label>
-            <select id="region-select">
+            <label for="region-select">Region(en):</label>
+            <select id="region-select" multiple size="5">
                 <option value="all">Alle Regionen</option>
-                </select>
+            </select>
+
+            <div class="question-count-selection" style="margin-top: 15px; margin-bottom: 15px;">
+                <label for="broj-pitanja" style="font-weight: bold;">
+                    Anzahl der Fragen auswählen:
+                </label>
+                <input type="number" id="broj-pitanja" min="1" max="360" value="80" style="width: 70px; margin-left: 10px;">
+                <span style="font-size: 0.95em; color: #555;">(1 bis 360 Fragen möglich)</span>
+            </div>
 
             <div class="mode-selection">
                 <h3>Modus auswählen:</h3>
@@ -39,7 +47,6 @@
         <div id="results-area" style="display: none;">
         </div>
     </div>
-
     <script type="module" src="/js/main.js"></script>
 </body>
 </html>
