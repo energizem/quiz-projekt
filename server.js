@@ -7,7 +7,6 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-
 // ******************************************************
 // KRAJ IZMJENA ZA POVEZIVANJE NA lokalnu bazu
 // ******************************************************
@@ -29,7 +28,6 @@ const pool = new Pool({
        rejectUnauthorized: false 
     }
 });
-
 
 
 app.use(express.json());
@@ -253,11 +251,72 @@ app.get('/api/last-input', (req, res) => {
     res.json({ lastRegion: lastEnteredRegion, lastGroup: lastEnteredGroup });
 });
 
-// --- OVDJE JE IZMJENA: podrška za više regija ---
+// --- OVDJE JE IZMJENA: podrška za više regija i simulaciju ispita ---
 app.get('/api/kviz-pitanja', async (req, res) => {
     try {
-        let { regija, broj } = req.query; // Dodaj broj
+        let { regija, broj, simulacija } = req.query;
 
+        // Simulacija ispita: 12 random pitanja iz svake regije, redom
+        if (simulacija === 'true') {
+            if (!Array.isArray(regija)) {
+                regija = [regija];
+            }
+            regija = regija.filter(r => r && r.trim() !== '');
+
+            const brojPitanjaPoRegiji = parseInt(broj, 10) || 12;
+            const placeholders = regija.map((_, i) => `$${i + 1}`).join(', ');
+            const queryText =
+                'SELECT p.id AS pitanje_id, p.regija, p.grupa, p.tekst_de AS pitanje_tekst_de, ' +
+                'p.tekst_hr AS pitanje_tekst_hr, p.slika_url, o.id AS odgovor_id, o.tekst_de AS odgovor_tekst_de, ' +
+                'o.tekst_hr AS odgovor_tekst_hr, o.tocan FROM pitanja p ' +
+                'JOIN odgovori o ON p.id = o.pitanje_id ' +
+                'WHERE p.regija IN (' + placeholders + ')';
+
+            const queryParams = regija;
+
+            const result = await pool.query(queryText, queryParams);
+
+            // Debug: Prikaži prvih 10 redova iz baze
+            console.log('Prvih 10 redova iz baze:', result.rows.slice(0, 10));
+
+            // Grupiraj pitanja po regiji i po ID-u
+            const pitanjaPoRegiji = {};
+            result.rows.forEach(row => {
+                if (!pitanjaPoRegiji[row.regija]) pitanjaPoRegiji[row.regija] = {};
+                if (!pitanjaPoRegiji[row.regija][row.pitanje_id]) {
+                    pitanjaPoRegiji[row.regija][row.pitanje_id] = {
+                        id: row.pitanje_id,
+                        regija: row.regija,
+                        grupa: row.grupa,
+                        tekst_de: row.pitanje_tekst_de,
+                        tekst_hr: row.pitanje_tekst_hr,
+                        slika_url: row.slika_url,
+                        odgovori: []
+                    };
+                }
+                pitanjaPoRegiji[row.regija][row.pitanje_id].odgovori.push({
+                    id: row.odgovor_id,
+                    tekst_de: row.odgovor_tekst_de,
+                    tekst_hr: row.odgovor_tekst_hr,
+                    tocan: row.tocan
+                });
+            });
+
+            // Za svaku regiju uzmi N random pitanja, redom po regiji
+            let questionsArray = [];
+            regija.forEach(r => {
+                let pitanjaArr = Object.values(pitanjaPoRegiji[r] || {});
+                console.log(`Regija: ${r}, pronađeno pitanja: ${pitanjaArr.length}`);
+                pitanjaArr = pitanjaArr.sort(() => Math.random() - 0.5);
+                const odabrana = pitanjaArr.slice(0, brojPitanjaPoRegiji);
+                questionsArray.push(...odabrana);
+            });
+console.log('Vraćam pitanja (simulacija):', questionsArray.map(q => ({ id: q.id, regija: q.regija })));
+            res.json(questionsArray);
+            return;
+        }
+
+        // Standardni način: podrška za više regija i broj pitanja
         let queryText = `
             SELECT
                 p.id AS pitanje_id,
@@ -279,7 +338,9 @@ app.get('/api/kviz-pitanja', async (req, res) => {
 
         // Podrška za više regija
         if (regija && regija !== 'all') {
-            if (!Array.isArray(regija)) regija = [regija];
+            if (!Array.isArray(regija)) {
+                regija = [regija];
+            }
             const placeholders = regija.map((_, i) => `$${i + 1}`).join(', ');
             queryText += ` WHERE p.regija IN (${placeholders})`;
             queryParams.push(...regija);
@@ -405,7 +466,7 @@ app.post('/api/unos-pitanja', async (req, res) => {
 });
 
 // Pokretanje servera
-app.listen(port, () => { // "port" je 3000
+app.listen(port, () => {
     console.log(`Server pokrenut na http://localhost:${port}`);
     console.log('Otvori u pregledniku za unos/pregled pitanja.');
 });

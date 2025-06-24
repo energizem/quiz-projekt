@@ -22,34 +22,26 @@ export async function fetchRegions() {
  * Dohvaća pitanja za kviz na temelju odabranih regija.
  * @param {string|Array} selectedRegion Odabrana regija ili niz regija ('all' ili ['Bayern', 'Hessen']).
  * @param {number} brojPitanja Broj pitanja koja se trebaju dohvatiti.
+ * @param {boolean} simulacija Indikator je li u pitanju simulacija kviza.
  * @returns {Promise<Array>} Niz objekata pitanja.
  * @throws {Error} Ako je došlo do greške prilikom dohvaćanja.
  */
-export async function fetchQuizQuestions(selectedRegion, brojPitanja) {
-    try {
-        let url = '/api/kviz-pitanja';
-        const params = [];
-        if (selectedRegion && selectedRegion !== 'all') {
-            if (Array.isArray(selectedRegion)) {
-                params.push(...selectedRegion.map(r => 'regija=' + encodeURIComponent(r)));
-            } else {
-                params.push('regija=' + encodeURIComponent(selectedRegion));
-            }
-        }
-        if (brojPitanja) {
-            params.push('broj=' + encodeURIComponent(brojPitanja));
-        }
-        if (params.length > 0) {
-            url += '?' + params.join('&');
-        }
+export async function fetchQuizQuestions(selectedRegion, brojPitanja, simulacija) {
+    let url = '/api/kviz-pitanja';
 
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Fehler beim Laden der Quizfragen:', error);
-        throw error;
+    // Pretvori selectedRegion u array ako nije već
+    let regije = Array.isArray(selectedRegion) ? selectedRegion : [selectedRegion];
+
+    // Dodaj regije u query string
+    const params = regije.map(r => `regija=${encodeURIComponent(r)}`).join('&');
+
+    // Dodaj simulacija i broj ako treba
+    if (simulacija) {
+        url += `?${params}&simulacija=true&broj=${brojPitanja || 12}`;
+    } else if (params) {
+        url += `?${params}&broj=${brojPitanja || 360}`;
     }
+
+    const res = await fetch(url);
+    return await res.json();
 }

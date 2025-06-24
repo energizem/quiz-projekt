@@ -16,9 +16,10 @@ import { shuffleArray } from './utils.js';
  * @param {string|Array} selectedRegion Odabrana regija ili niz regija.
  * @param {string} mode Odabrani mod ('learning' ili 'exam').
  */
-export async function initializeQuiz(selectedRegion, mode, brojPitanja) {
+export async function initializeQuiz(selectedRegion, mode, brojPitanja, simulacija) {
     try {
-        const data = await fetchQuizQuestions(selectedRegion, brojPitanja);
+        // Proslijedi simulacija parametar!
+        const data = await fetchQuizQuestions(selectedRegion, brojPitanja, simulacija);
 
         if (data.length > 0) {
             resetQuizState(); // PRVO RESETIRAJ STANJE
@@ -32,8 +33,10 @@ export async function initializeQuiz(selectedRegion, mode, brojPitanja) {
                 return { ...q, shuffledAnswers: shuffledAnswers }; // Dodajte promiješane odgovore kao novo svojstvo
             });
 
-            setShuffledQuestions(questionsWithShuffledAnswers); // Spremite pitanja s već promiješanim odgovorima
-            shuffleArray(getShuffledQuestions()); // Promiješajte redoslijed pitanja (ako to već niste radili)
+            setShuffledQuestions(questionsWithShuffledAnswers);
+            if (!simulacija) {
+                shuffleArray(getShuffledQuestions()); // Samo za obične modove!
+            }
 
             document.getElementById('quiz-setup').style.display = 'none';
             document.getElementById('quiz-content').style.display = 'block';
