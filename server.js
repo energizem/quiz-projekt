@@ -29,24 +29,21 @@ const pool = new Pool({
     }
 });
 
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/badmin', express.static('badmin'));
 
-// Posljednje unesena regija i grupa za automatsko popunjavanje
 let lastEnteredRegion = '';
 let lastEnteredGroup = '';
 
-// Ruta za prikaz obrasca za unos/pregled pitanja
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // GET ruta za dohvaćanje svih pitanja s odgovorima
 app.get('/api/pitanja', async (req, res) => {
-    const { regija, grupa } = req.query; // Dohvati parametre za filtriranje
+    const { regija, grupa } = req.query;
 
     let queryText = `
         SELECT
@@ -56,6 +53,7 @@ app.get('/api/pitanja', async (req, res) => {
             p.tekst_de,
             p.tekst_hr,
             p.slika_url,
+            p.note,
             json_agg(json_build_object('id', o.id, 'tekst_de', o.tekst_de, 'tekst_hr', o.tekst_hr, 'tocan', o.tocan) ORDER BY o.id) AS odgovori
         FROM
             pitanja p
@@ -83,7 +81,7 @@ app.get('/api/pitanja', async (req, res) => {
         queryText += ` WHERE ` + conditions.join(' AND ');
     }
 
-    queryText += ` GROUP BY p.id ORDER BY p.id DESC;`; // Grupira odgovore po pitanju i sortira najnovije prvo
+    queryText += ` GROUP BY p.id, p.note ORDER BY p.id DESC;`;
 
     try {
         const result = await pool.query(queryText, queryParams);
@@ -107,14 +105,13 @@ app.post('/api/pitanja', async (req, res) => {
         tocni_odgovori_indexi
     } = req.body;
 
-    // Ažuriraj posljednje unesene vrijednosti
     lastEnteredRegion = regija;
     lastEnteredGroup = grupa;
 
     let client;
     try {
         client = await pool.connect();
-        await client.query('BEGIN'); // Pokreće transakciju
+        await client.query('BEGIN');
 
         const questionResult = await client.query(
             `INSERT INTO pitanja (regija, grupa, tekst_de, tekst_hr, slika_url)
@@ -175,7 +172,6 @@ app.put('/api/pitanja/:id', async (req, res) => {
         client = await pool.connect();
         await client.query('BEGIN');
 
-        // 1. Ažuriraj pitanje
         await client.query(
             `UPDATE pitanja
              SET regija = $1, grupa = $2, tekst_de = $3, tekst_hr = $4, slika_url = $5
@@ -183,10 +179,8 @@ app.put('/api/pitanja/:id', async (req, res) => {
             [regija, grupa, tekst_de, tekst_hr, slika_url || null, id]
         );
 
-        // 2. Obriši stare odgovore za ovo pitanje
         await client.query(`DELETE FROM odgovori WHERE pitanje_id = $1`, [id]);
 
-        // 3. Unesi nove odgovore
         const answersDeArray = odgovori_de.split(';');
         const answersHrArray = odgovori_hr.split(';');
         const correctIndexes = tocni_odgovori_indexi.split(',').map(Number);
@@ -227,9 +221,7 @@ app.delete('/api/pitanja/:id', async (req, res) => {
     try {
         client = await pool.connect();
         await client.query('BEGIN');
-        // Prvo obriši odgovore povezane s pitanjem (zbog foreign keya)
         await client.query('DELETE FROM odgovori WHERE pitanje_id = $1', [id]);
-        // Zatim obriši pitanje
         await client.query('DELETE FROM pitanja WHERE id = $1', [id]);
         await client.query('COMMIT');
         res.status(200).json({ message: 'Pitanje uspješno obrisano!' });
@@ -246,7 +238,6 @@ app.delete('/api/pitanja/:id', async (req, res) => {
     }
 });
 
-// Ruta za dohvaćanje posljednje unesene regije i grupe
 app.get('/api/last-input', (req, res) => {
     res.json({ lastRegion: lastEnteredRegion, lastGroup: lastEnteredGroup });
 });
@@ -267,7 +258,7 @@ app.get('/api/kviz-pitanja', async (req, res) => {
             const placeholders = regija.map((_, i) => `$${i + 1}`).join(', ');
             const queryText =
                 'SELECT p.id AS pitanje_id, p.regija, p.grupa, p.tekst_de AS pitanje_tekst_de, ' +
-                'p.tekst_hr AS pitanje_tekst_hr, p.slika_url, o.id AS odgovor_id, o.tekst_de AS odgovor_tekst_de, ' +
+                'p.tekst_hr AS pitanje_tekst_hr, p.slika_url, p.note, o.id AS odgovor_id, o.tekst_de AS odgovor_tekst_de, ' +
                 'o.tekst_hr AS odgovor_tekst_hr, o.tocan FROM pitanja p ' +
                 'JOIN odgovori o ON p.id = o.pitanje_id ' +
                 'WHERE p.regija IN (' + placeholders + ')';
@@ -276,10 +267,6 @@ app.get('/api/kviz-pitanja', async (req, res) => {
 
             const result = await pool.query(queryText, queryParams);
 
-            // Debug: Prikaži prvih 10 redova iz baze
-            console.log('Prvih 10 redova iz baze:', result.rows.slice(0, 10));
-
-            // Grupiraj pitanja po regiji i po ID-u
             const pitanjaPoRegiji = {};
             result.rows.forEach(row => {
                 if (!pitanjaPoRegiji[row.regija]) pitanjaPoRegiji[row.regija] = {};
@@ -291,6 +278,7 @@ app.get('/api/kviz-pitanja', async (req, res) => {
                         tekst_de: row.pitanje_tekst_de,
                         tekst_hr: row.pitanje_tekst_hr,
                         slika_url: row.slika_url,
+                        note: row.note,
                         odgovori: []
                     };
                 }
@@ -306,12 +294,10 @@ app.get('/api/kviz-pitanja', async (req, res) => {
             let questionsArray = [];
             regija.forEach(r => {
                 let pitanjaArr = Object.values(pitanjaPoRegiji[r] || {});
-                console.log(`Regija: ${r}, pronađeno pitanja: ${pitanjaArr.length}`);
                 pitanjaArr = pitanjaArr.sort(() => Math.random() - 0.5);
                 const odabrana = pitanjaArr.slice(0, brojPitanjaPoRegiji);
                 questionsArray.push(...odabrana);
             });
-console.log('Vraćam pitanja (simulacija):', questionsArray.map(q => ({ id: q.id, regija: q.regija })));
             res.json(questionsArray);
             return;
         }
@@ -325,6 +311,7 @@ console.log('Vraćam pitanja (simulacija):', questionsArray.map(q => ({ id: q.id
                 p.tekst_de AS pitanje_tekst_de,
                 p.tekst_hr AS pitanje_tekst_hr,
                 p.slika_url,
+                p.note,
                 o.id AS odgovor_id,
                 o.tekst_de AS odgovor_tekst_de,
                 o.tekst_hr AS odgovor_tekst_hr,
@@ -360,6 +347,7 @@ console.log('Vraćam pitanja (simulacija):', questionsArray.map(q => ({ id: q.id
                     tekst_de: row.pitanje_tekst_de,
                     tekst_hr: row.pitanje_tekst_hr,
                     slika_url: row.slika_url,
+                    note: row.note,
                     odgovori: []
                 });
             }
@@ -392,9 +380,8 @@ console.log('Vraćam pitanja (simulacija):', questionsArray.map(q => ({ id: q.id
 
 app.get('/api/regije', async (req, res) => {
     try {
-        // Dohvaćanje jedinstvenih regija iz 'pitanja' tablice
         const result = await pool.query('SELECT DISTINCT regija FROM pitanja ORDER BY regija;');
-        res.json(result.rows); // Vraća [{ regija: 'Bayern' }, { regija: 'Hessen' }, ...]
+        res.json(result.rows);
     } catch (error) {
         console.error('Fehler beim Abrufen der Regionen:', error);
         res.status(500).json({ message: 'Fehler beim Abrufen der Regionen.' });
@@ -403,15 +390,15 @@ app.get('/api/regije', async (req, res) => {
 
 // --- Nova ruta za unos pitanja iz Google Sheeta ---
 app.post('/api/unos-pitanja', async (req, res) => {
-    const { questions } = req.body; // Očekujemo array objekata pitanja iz Google Apps Scripta
+    const { questions } = req.body;
 
     if (!questions || !Array.isArray(questions) || questions.length === 0) {
         return res.status(400).json({ message: 'Nema podataka o pitanjima za unos.' });
     }
 
-    const client = await pool.connect(); // Koristimo transakciju za atomicni unos
+    const client = await pool.connect();
     try {
-        await client.query('BEGIN'); // Pokreni transakciju
+        await client.query('BEGIN');
 
         for (const questionData of questions) {
             const {
@@ -423,22 +410,20 @@ app.post('/api/unos-pitanja', async (req, res) => {
                 odgovori
             } = questionData;
 
-            // Unos pitanja
             const questionInsertQuery = `
                 INSERT INTO pitanja (regija, grupa, tekst_hr, tekst_de, slika_url)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id;
             `;
             const questionResult = await client.query(questionInsertQuery, [
-                regija || 'Regija 01', // Default ako regija nije definirana
-                grupa || 'Općenito',   // Default ako grupa nije definirana
+                regija || 'Regija 01',
+                grupa || 'Općenito',
                 tekst_hr,
                 tekst_de,
                 slika_url || null
             ]);
             const pitanjeId = questionResult.rows[0].id;
 
-            // Unos odgovora
             for (const odgovor of odgovori) {
                 const answerInsertQuery = `
                     INSERT INTO odgovori (pitanje_id, tekst_hr, tekst_de, tocan)
@@ -453,15 +438,53 @@ app.post('/api/unos-pitanja', async (req, res) => {
             }
         }
 
-        await client.query('COMMIT'); // Potvrdi transakciju
+        await client.query('COMMIT');
         res.status(201).json({ message: 'Pitanja uspješno unesena!', count: questions.length });
 
     } catch (error) {
-        await client.query('ROLLBACK'); // Poništi transakciju u slučaju greške
+        await client.query('ROLLBACK');
         console.error('Greška pri unosu pitanja iz Google Sheeta:', error);
         res.status(500).json({ message: 'Greška pri unosu pitanja.', error: error.message });
     } finally {
-        client.release(); // Oslobodi klijent iz poola
+        client.release();
+    }
+});
+
+// PUT ruta za ažuriranje note statusa pitanja
+app.put('/api/pitanja/:id/note', async (req, res) => {
+    const { id } = req.params;
+    const { note } = req.body;
+    try {
+        await pool.query('UPDATE pitanja SET note = $1 WHERE id = $2', [note, id]);
+        res.json({ message: 'Note status ažuriran.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Greška pri ažuriranju note statusa.' });
+    }
+});
+
+app.get('/api/pitanja-note', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT
+                p.id,
+                p.regija,
+                p.grupa,
+                p.tekst_de,
+                p.tekst_hr,
+                p.slika_url,
+                p.note,
+                json_agg(json_build_object('id', o.id, 'tekst_de', o.tekst_de, 'tekst_hr', o.tekst_hr, 'tocan', o.tocan) ORDER BY o.id) AS odgovori
+            FROM
+                pitanja p
+            JOIN
+                odgovori o ON p.id = o.pitanje_id
+            WHERE p.note = TRUE
+            GROUP BY p.id, p.note
+            ORDER BY p.id DESC;
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Greška pri dohvaćanju note pitanja', details: err.message });
     }
 });
 

@@ -19,28 +19,51 @@ export function createQuestionCard(question, questionNumberPrefix, modeClass = '
     const questionCard = document.createElement('div');
     questionCard.className = `question-card ${modeClass}`;
     questionCard.id = `question-${question.id}`;
+    questionCard.style.position = 'relative';
 
-    // --- Pitanje i prijevod pitanja ---
-    const questionTextAndToggleButtonContainer = document.createElement('div');
-    questionTextAndToggleButtonContainer.className = 'question-text-and-toggle-container';
+    // --- Zaglavlje pitanja s gumbom za Note ---
+    const questionHeader = document.createElement('div');
+    questionHeader.style.display = 'flex';
+    questionHeader.style.alignItems = 'center';
+    questionHeader.style.justifyContent = 'space-between';
 
+    // Tekst pitanja
     const questionText = document.createElement('p');
     questionText.className = 'question-text';
     questionText.innerHTML = `${questionNumberPrefix}${question.tekst_de}`;
 
-    const toggleButton = document.createElement('span');
-    toggleButton.className = 'toggle-translation-button';
-    toggleButton.textContent = ' [+]';
-    const translationDiv = document.createElement('div');
-    translationDiv.className = 'translation-text hidden-translation';
-    translationDiv.innerHTML = `**HR:** ${question.tekst_hr}`;
+    // Gumb sa zvjezdicom
+    const noteBtn = document.createElement('button');
+    noteBtn.className = 'note-btn';
+    noteBtn.setAttribute('aria-label', question.note ? 'Ukloni oznaku s pitanja' : 'Označi pitanje');
+    noteBtn.innerHTML = question.note ? '★' : '☆'; // Puna ili prazna zvjezdica
 
-    setupTranslationToggle(toggleButton, translationDiv);
+    // Stil i boja
+    noteBtn.style.background = 'transparent';
+    noteBtn.style.color = question.note ? 'orange' : '#bbb';
+    noteBtn.style.fontSize = '1.3em';
+    noteBtn.style.padding = '2px 6px';
+    noteBtn.style.width = '32px';
+    noteBtn.style.height = '32px';
+    noteBtn.style.lineHeight = '1';
+    noteBtn.style.marginLeft = '10px';
 
-    questionTextAndToggleButtonContainer.appendChild(questionText);
-    questionTextAndToggleButtonContainer.appendChild(toggleButton);
-    questionCard.appendChild(questionTextAndToggleButtonContainer);
-    questionCard.appendChild(translationDiv);
+    noteBtn.onclick = async () => {
+        const noviStatus = !question.note;
+        await fetch(`/api/pitanja/${question.id}/note`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ note: noviStatus })
+        });
+        question.note = noviStatus;
+        noteBtn.innerHTML = noviStatus ? '★' : '☆';
+        noteBtn.style.color = noviStatus ? 'orange' : '#bbb';
+        noteBtn.setAttribute('aria-label', noviStatus ? 'Ukloni oznaku s pitanja' : 'Označi pitanje');
+    };
+
+    questionHeader.appendChild(questionText);
+    questionHeader.appendChild(noteBtn);
+    questionCard.appendChild(questionHeader);
 
     // --- Slika pitanja ---
     if (question.slika_url) {
@@ -103,6 +126,12 @@ export function createQuestionCard(question, questionNumberPrefix, modeClass = '
 
     questionCard.appendChild(answersDiv);
     return questionCard;
+}
+
+// Pomoćna funkcija za stil i tekst gumba
+function setNoteBtnStyleAndText(btn, isNoted) {
+    btn.textContent = isNoted ? 'Ukloni oznaku' : 'Note';
+    btn.style.background = isNoted ? 'orange' : 'gold';
 }
 
 /**
