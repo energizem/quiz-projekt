@@ -339,9 +339,9 @@ button:hover {
 
 /* AŽURIRANO: Stilovi za prijevodni tekst (primjenjuju se i na pitanje i na odgovor) */
 .translation-text {
-    font-size: 0.9em;
-    color: #555;
-    margin-top: 5px;
+    color: #333;
+    font-size: 0.95em;
+    margin-left: 5px;
     padding-left: 10px;
     border-left: 2px solid #ddd;
     width: 100%; /* Osiguraj da prijevod zauzima punu širinu unutar svog roditelja */
@@ -447,4 +447,14 @@ button:hover {
 }
 .note-btn:focus {
     outline: 2px solid #007bff;
+}
+
+.translate-btn {
+    color: #007bff;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 1em;
 }

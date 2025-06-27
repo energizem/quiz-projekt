@@ -7,27 +7,56 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+const SIMPLE_PASSWORD = 'a';
+
+app.use((req, res, next) => {
+    // Dozvoli statičke resurse bez autentikacije
+    if (
+        req.path.startsWith('/public') ||
+        req.path.startsWith('/badmin') ||
+        req.path.endsWith('.css') ||
+        req.path.endsWith('.js') ||
+        req.path.endsWith('.png') ||
+        req.path.endsWith('.jpg')
+    ) {
+        return next();
+    }
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Basic ')) {
+        res.set('WWW-Authenticate', 'Basic realm="Privatno"');
+        return res.status(401).send('Potrebna lozinka');
+    }
+    const pass = Buffer.from(auth.split(' ')[1], 'base64').toString().split(':')[1];
+    if (pass === SIMPLE_PASSWORD) {
+        return next();
+    }
+    res.set('WWW-Authenticate', 'Basic realm="Privatno"');
+    return res.status(401).send('Pogrešna lozinka');
+});
+
+
 // ******************************************************
 // KRAJ IZMJENA ZA POVEZIVANJE NA lokalnu bazu
 // ******************************************************
-/* const pool = new Pool({
+const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT || 5432,
-}); */
+});
 
 // ******************************************************
 // OVDJE SU POTREBNE IZMJENE ZA POVEZIVANJE NA RENDER BAZU
 // ******************************************************
 
-const pool = new Pool({
+/* const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
        rejectUnauthorized: false 
     }
-});
+}); */
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -487,6 +516,7 @@ app.get('/api/pitanja-note', async (req, res) => {
         res.status(500).json({ error: 'Greška pri dohvaćanju note pitanja', details: err.message });
     }
 });
+
 
 // Pokretanje servera
 app.listen(port, () => {

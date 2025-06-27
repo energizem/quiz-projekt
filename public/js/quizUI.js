@@ -21,24 +21,27 @@ export function createQuestionCard(question, questionNumberPrefix, modeClass = '
     questionCard.id = `question-${question.id}`;
     questionCard.style.position = 'relative';
 
-    // --- Zaglavlje pitanja s gumbom za Note ---
+    // --- Zaglavlje pitanja ---
     const questionHeader = document.createElement('div');
     questionHeader.style.display = 'flex';
     questionHeader.style.alignItems = 'center';
     questionHeader.style.justifyContent = 'space-between';
 
-    // Tekst pitanja
+    // Lijevo: tekst pitanja
     const questionText = document.createElement('p');
     questionText.className = 'question-text';
     questionText.innerHTML = `${questionNumberPrefix}${question.tekst_de}`;
 
-    // Gumb sa zvjezdicom
+    // Desno: gumbi (zvjezdica i prijevod)
+    const rightButtons = document.createElement('div');
+    rightButtons.style.display = 'flex';
+    rightButtons.style.alignItems = 'center';
+
+    // Zvjezdica
     const noteBtn = document.createElement('button');
     noteBtn.className = 'note-btn';
     noteBtn.setAttribute('aria-label', question.note ? 'Ukloni oznaku s pitanja' : 'Označi pitanje');
-    noteBtn.innerHTML = question.note ? '★' : '☆'; // Puna ili prazna zvjezdica
-
-    // Stil i boja
+    noteBtn.innerHTML = question.note ? '★' : '☆';
     noteBtn.style.background = 'transparent';
     noteBtn.style.color = question.note ? 'orange' : '#bbb';
     noteBtn.style.fontSize = '1.3em';
@@ -47,7 +50,6 @@ export function createQuestionCard(question, questionNumberPrefix, modeClass = '
     noteBtn.style.height = '32px';
     noteBtn.style.lineHeight = '1';
     noteBtn.style.marginLeft = '10px';
-
     noteBtn.onclick = async () => {
         const noviStatus = !question.note;
         await fetch(`/api/pitanja/${question.id}/note`, {
@@ -60,9 +62,34 @@ export function createQuestionCard(question, questionNumberPrefix, modeClass = '
         noteBtn.style.color = noviStatus ? 'orange' : '#bbb';
         noteBtn.setAttribute('aria-label', noviStatus ? 'Ukloni oznaku s pitanja' : 'Označi pitanje');
     };
+    rightButtons.appendChild(noteBtn);
+
+    // Gumb za prijevod pitanja (ako treba)
+    if (showAnswerTranslations && question.tekst_hr) {
+        const translateBtn = document.createElement('button');
+        translateBtn.className = 'translate-btn';
+        translateBtn.textContent = '[+]';
+        translateBtn.style.marginLeft = '8px';
+        translateBtn.style.fontSize = '1em';
+        translateBtn.style.background = 'transparent';
+        translateBtn.style.border = 'none';
+        translateBtn.style.cursor = 'pointer';
+
+        // Prikaz prijevoda pitanja
+        translateBtn.onclick = () => {
+            if (questionText.innerHTML.includes(question.tekst_hr)) {
+                questionText.innerHTML = `${questionNumberPrefix}${question.tekst_de}`;
+                translateBtn.textContent = '[+]';
+            } else {
+                questionText.innerHTML = `${questionNumberPrefix}${question.tekst_de}<br><span class="translation-text"><b>HR:</b> ${question.tekst_hr}</span>`;
+                translateBtn.textContent = '[-]';
+            }
+        };
+        rightButtons.appendChild(translateBtn);
+    }
 
     questionHeader.appendChild(questionText);
-    questionHeader.appendChild(noteBtn);
+    questionHeader.appendChild(rightButtons);
     questionCard.appendChild(questionHeader);
 
     // --- Slika pitanja ---
