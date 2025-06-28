@@ -7,6 +7,10 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+// ******************************************************
+// password zastita min
+// ******************************************************
 const SIMPLE_PASSWORD = 'a';
 app.use((req, res, next) => {
     // Dozvoli statičke resurse bez autentikacije
@@ -33,9 +37,13 @@ app.use((req, res, next) => {
     return res.status(401).send('Pogrešna lozinka');
 });
 
-// ******************************************************
-// KRAJ IZMJENA ZA POVEZIVANJE NA lokalnu bazu
-// ******************************************************
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+       rejectUnauthorized: false 
+    }
+});
+
 /* const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
@@ -43,17 +51,6 @@ app.use((req, res, next) => {
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT || 5432,
 }); */
-
-// ******************************************************
-// OVDJE SU POTREBNE IZMJENE ZA POVEZIVANJE NA RENDER BAZU
-// ******************************************************
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-       rejectUnauthorized: false 
-    }
-});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

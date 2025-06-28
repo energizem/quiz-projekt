@@ -94,10 +94,13 @@ export function createQuestionCard(question, questionNumberPrefix, modeClass = '
 
     // --- Slika pitanja ---
     if (question.slika_url) {
-        const questionImage = document.createElement('img');
-        questionImage.className = 'question-image';
-        questionImage.src = question.slika_url;
-        questionCard.appendChild(questionImage);
+        const img = document.createElement('img');
+        img.src = `/slike/${question.slika_url}`;
+        img.alt = 'Slika uz pitanje';
+        img.className = 'question-image';
+        img.style.maxWidth = '100%';
+        img.style.margin = '10px 0';
+        questionCard.appendChild(img);
     }
 
     // --- Odgovori ---

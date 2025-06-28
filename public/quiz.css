@@ -458,3 +458,12 @@ button:hover {
     padding: 2px 6px;
     font-size: 1em;
 }
+
+.question-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 10px 0;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px #0001;
+}
