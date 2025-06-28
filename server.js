@@ -37,13 +37,9 @@ app.use((req, res, next) => {
     return res.status(401).send('Pogrešna lozinka');
 });
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-       rejectUnauthorized: false 
-    }
-});
-
+// ******************************************************
+// KRAJ IZMJENA ZA POVEZIVANJE NA lokalnu bazu
+// ******************************************************
 /* const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
@@ -51,6 +47,17 @@ const pool = new Pool({
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT || 5432,
 }); */
+
+// ******************************************************
+// OVDJE SU POTREBNE IZMJENE ZA POVEZIVANJE NA RENDER BAZU
+// ******************************************************
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+       rejectUnauthorized: false 
+    }
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
