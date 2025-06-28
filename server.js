@@ -415,7 +415,11 @@ app.get('/api/regije', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Fehler beim Abrufen der Regionen:', error);
-        res.status(500).json({ message: 'Fehler beim Abrufen der Regionen.' });
+        res.status(500).json({ 
+            message: 'Fehler beim Abrufen der Regionen.', 
+            error: error.message, 
+            stack: error.stack 
+        });
     }
 });
 
